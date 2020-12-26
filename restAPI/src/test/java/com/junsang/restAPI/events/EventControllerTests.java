@@ -3,10 +3,13 @@ package com.junsang.restAPI.events;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -15,8 +18,7 @@ import java.time.LocalDateTime;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
 @WebMvcTest
@@ -27,6 +29,15 @@ public class EventControllerTests {
 
     @Autowired
     ObjectMapper objectMapper;
+
+    /**
+     * EventRepository Bean 이 없다는 Exception 발생
+     * JpaRepository 를 상속 받는 Interface 만 있으면 자동으로 Bean 이 만들어지는데, Why ?
+     * WebMvcTest 는 Slash 테스트라 웹용 Bean 들만 등록을 해주지, Repository 를 등록해주지 않는다.
+     * 그러하여 Repository 를 Mocking
+     */
+    @MockBean
+    EventRepository eventRepository;
 
     @Test
     public void createEvent() throws Exception {
@@ -43,14 +54,26 @@ public class EventControllerTests {
                 .location("강남역 D2 스타텁 팩토리")
                 .build();
 
-        mockMvc.perform(post("/api/events/")              // Request
-                    .contentType(MediaType.APPLICATION_JSON_UTF8)   // 미디어타입
-                    .accept(MediaTypes.HAL_JSON)                    // 요구 확장자
+
+        /* ===================================================================== */
+        /* Mock 객체이기에 save 등을 하더라도 무조건 NullPoint 가 일어남. ==> stubbing 필요 */
+        /* ===================================================================== */
+        event.setId(10);
+        Mockito.when(eventRepository.save(event)).thenReturn(event);    // save 시, event 를 리턴하라
+        /* ===================================================================== */
+
+
+        mockMvc.perform(post("/api/events/")                // Request
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)    // Header의 Content-Type
+                    .accept(MediaTypes.HAL_JSON_VALUE)                // 요구 Content-Type
                     .content(objectMapper.writeValueAsString(event))
                 )
-                .andDo(print())                                     // 응답과 요청 출력
-                .andExpect(status().isCreated())                    // 기대값
-                .andExpect(jsonPath("id").exists());       // ID 값이 존재 하는지 검증
+                .andDo(print())                                      // 응답과 요청 출력
+                .andExpect(status().isCreated())                     // 201 상태 검증
+                .andExpect(jsonPath("id").exists())         // ID 값이 존재 검증
+                .andExpect(header().exists(HttpHeaders.LOCATION))    // Location 존재 검증
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaTypes.HAL_JSON_VALUE))
+        ;
 
     }
 }

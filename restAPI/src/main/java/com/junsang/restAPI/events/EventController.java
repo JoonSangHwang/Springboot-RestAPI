@@ -14,10 +14,16 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 @Controller
 public class EventController {
 
+    private final EventRepository eventRepository;
+
+    public EventController(EventRepository eventRepository) {
+        this.eventRepository = eventRepository;
+    }
+
     @PostMapping(value = "/api/events", produces = MediaTypes.HAL_JSON_VALUE)
     public ResponseEntity createEvent(@RequestBody Event event) {
-        URI createUri = linkTo(EventController.class).slash("{id}").toUri();
-        event.setId(10);
+        Event newEvent = this.eventRepository.save(event);
+        URI createUri = linkTo(EventController.class).slash(newEvent.getId()).toUri();
         //= http://localhost/%257Bid%257D
         return ResponseEntity.created(createUri).body(event);
     }

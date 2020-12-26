@@ -4,9 +4,7 @@ import java.time.LocalDateTime;
 
 import lombok.*;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Getter @Setter
 @EqualsAndHashCode(of = "id")
@@ -30,6 +28,7 @@ public class Event {
     private int limitOfEnrollment;
     private boolean offline;
     private boolean free;
+    @Enumerated(EnumType.STRING)
     private EventStatus eventStatus = EventStatus.DRAFT;
 
 }
