@@ -1,19 +1,12 @@
 package com.junsang.restAPI.events;
 
-import java.time.LocalDateTime;
-
 import lombok.*;
 
-import javax.persistence.*;
+import java.time.LocalDateTime;
 
-@Getter @Setter
-@EqualsAndHashCode(of = "id")
-@Builder @NoArgsConstructor @AllArgsConstructor
-@Entity
-public class Event {
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
+public class EventDto {
 
-    @Id @GeneratedValue
-    private Integer id;
     private String name;
     private String description;
     private LocalDateTime beginEnrollmentDateTime;
@@ -24,9 +17,5 @@ public class Event {
     private int basePrice; // (optional)
     private int maxPrice; // (optional)
     private int limitOfEnrollment;
-    private boolean offline;
-    private boolean free;
-    @Enumerated(EnumType.STRING)
-    private EventStatus eventStatus = EventStatus.DRAFT;
 
 }
