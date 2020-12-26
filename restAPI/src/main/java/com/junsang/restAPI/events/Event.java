@@ -4,12 +4,19 @@ import java.time.LocalDateTime;
 
 import lombok.*;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+
 @Getter @Setter
 @EqualsAndHashCode(of = "id")
 @Builder @NoArgsConstructor
 @AllArgsConstructor
+@Entity
 public class Event {
 
+    @Id
+    @GeneratedValue
     private Integer id;
     private String name;
     private String description;
