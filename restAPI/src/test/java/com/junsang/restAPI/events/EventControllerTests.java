@@ -92,13 +92,15 @@ public class EventControllerTests {
                 .andExpect(jsonPath("_links.self").exists())            // 링크정보_view
                 .andExpect(jsonPath("_links.query-events").exists())    // 링크정보_만든 사람이 수정
                 .andExpect(jsonPath("_links.update-event").exists())    // 링크정보_목록으로 이동
+                .andExpect(jsonPath("_links.profile").exists())         // 링크정보_프로파일
 
                 /* REST Docs */
                 .andDo(document("create-event",
                         links(                      // 링크 문서화
                                 linkWithRel("self").description("link to self"),
                                 linkWithRel("query-events").description("link to query events"),
-                                linkWithRel("update-event").description("link to update an existing event")
+                                linkWithRel("update-event").description("link to update an existing event"),
+                                linkWithRel("profile").description("link to update an existing event")
                         ),
                         requestHeaders(             // 요청 헤더 문서화
                                 headerWithName(HttpHeaders.ACCEPT).description("accept header"),
@@ -140,17 +142,20 @@ public class EventControllerTests {
                                 // fieldWithPath("_links.self.href").description("link to self"),
                                 // fieldWithPath("_links.query-events.href").description("link to query event list"),
                                 // fieldWithPath("_links.update-event.href").description("link to update existing event"),
+                                // fieldWithPath("_links.profile.href").description("link to profile")
 
                                 // 2번째 방법 : optional fields
                                 // fieldWithPath("_links.self.href").type(JsonFieldType.STRING).description("my href").optional(),
                                 // fieldWithPath("_links.query-events.href").type(JsonFieldType.STRING).description("my href").optional(),
-                                // fieldWithPath("_links.update-event.href").type(JsonFieldType.STRING).description("my href").optional()
+                                // fieldWithPath("_links.update-event.href").type(JsonFieldType.STRING).description("my href").optional(),
+                                // fieldWithPath("_links.profile.href").type(JsonFieldType.STRING).description("my href").optional()
 
                                 // 3번째 방법 : ignored
                                 fieldWithPath("_links.*").ignored(),
                                 fieldWithPath("_links.self.*").ignored(),
                                 fieldWithPath("_links.query-events.*").ignored(),
-                                fieldWithPath("_links.update-event.*").ignored()
+                                fieldWithPath("_links.update-event.*").ignored(),
+                                fieldWithPath("_links.profile.*").ignored()
                         )
                 ))
         ;
