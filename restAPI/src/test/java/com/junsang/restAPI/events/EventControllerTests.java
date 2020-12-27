@@ -18,12 +18,17 @@ import org.springframework.context.annotation.Import;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
+import static org.springframework.restdocs.headers.HeaderDocumentation.*;
+import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.linkWithRel;
+import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.links;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -82,10 +87,72 @@ public class EventControllerTests {
                 .andExpect(jsonPath("free").value(false))
                 .andExpect(jsonPath("offline").value(true))
                 .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.name()))
+
+                /* HATEOAS */
                 .andExpect(jsonPath("_links.self").exists())            // 링크정보_view
                 .andExpect(jsonPath("_links.query-events").exists())    // 링크정보_만든 사람이 수정
                 .andExpect(jsonPath("_links.update-event").exists())    // 링크정보_목록으로 이동
-                .andDo(document("create-event"))
+
+                /* REST Docs */
+                .andDo(document("create-event",
+                        links(                      // 링크 문서화
+                                linkWithRel("self").description("link to self"),
+                                linkWithRel("query-events").description("link to query events"),
+                                linkWithRel("update-event").description("link to update an existing event")
+                        ),
+                        requestHeaders(             // 요청 헤더 문서화
+                                headerWithName(HttpHeaders.ACCEPT).description("accept header"),
+                                headerWithName(HttpHeaders.CONTENT_TYPE).description("content type header")
+                        ),
+                        requestFields(              // 요청 본문 문서화
+                                fieldWithPath("name").description("이름"),
+                                fieldWithPath("description").description("설명"),
+                                fieldWithPath("beginEnrollmentDateTime").description("date time of begin of new event"),
+                                fieldWithPath("closeEnrollmentDateTime").description("date time of close of new event"),
+                                fieldWithPath("beginEventDateTime").description("date time of begin of new event"),
+                                fieldWithPath("endEventDateTime").description("date time of end of new event"),
+                                fieldWithPath("location").description("location of new event"),
+                                fieldWithPath("basePrice").description("base price of new event"),
+                                fieldWithPath("maxPrice").description("max price of new event"),
+                                fieldWithPath("limitOfEnrollment").description("limit of enrolmment")
+                        ),
+                        responseHeaders(            // 응답 헤더 문서화
+                                headerWithName(HttpHeaders.LOCATION).description("Location header"),
+                                headerWithName(HttpHeaders.CONTENT_TYPE).description("Content type")
+                        ),
+                        responseFields(             // 응답 본문 문서화
+                                fieldWithPath("id").description("identifier of new event"),
+                                fieldWithPath("name").description("Name of new event"),
+                                fieldWithPath("description").description("description of new event"),
+                                fieldWithPath("beginEnrollmentDateTime").description("date time of begin of new event"),
+                                fieldWithPath("closeEnrollmentDateTime").description("date time of close of new event"),
+                                fieldWithPath("beginEventDateTime").description("date time of begin of new event"),
+                                fieldWithPath("endEventDateTime").description("date time of end of new event"),
+                                fieldWithPath("location").description("location of new event"),
+                                fieldWithPath("basePrice").description("base price of new event"),
+                                fieldWithPath("maxPrice").description("max price of new event"),
+                                fieldWithPath("limitOfEnrollment").description("limit of enrolmment"),
+                                fieldWithPath("free").description("it tells if this event is free or not"),
+                                fieldWithPath("offline").description("it tells if this event is offline event or not"),
+                                fieldWithPath("eventStatus").description("event status"),
+
+                                // 1번째 방법 : 모두 문서화 한다.
+                                // fieldWithPath("_links.self.href").description("link to self"),
+                                // fieldWithPath("_links.query-events.href").description("link to query event list"),
+                                // fieldWithPath("_links.update-event.href").description("link to update existing event"),
+
+                                // 2번째 방법 : optional fields
+                                // fieldWithPath("_links.self.href").type(JsonFieldType.STRING).description("my href").optional(),
+                                // fieldWithPath("_links.query-events.href").type(JsonFieldType.STRING).description("my href").optional(),
+                                // fieldWithPath("_links.update-event.href").type(JsonFieldType.STRING).description("my href").optional()
+
+                                // 3번째 방법 : ignored
+                                fieldWithPath("_links.*").ignored(),
+                                fieldWithPath("_links.self.*").ignored(),
+                                fieldWithPath("_links.query-events.*").ignored(),
+                                fieldWithPath("_links.update-event.*").ignored()
+                        )
+                ))
         ;
 
     }
