@@ -1,9 +1,19 @@
 package com.junsang.restAPI.events;
 
+import junitparams.Parameters;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SpringBootTest
 class EventTest {
 
     @Test
@@ -31,81 +41,60 @@ class EventTest {
         assertThat(event.getDescription()).isEqualTo(description);
     }
 
-    @Test
-    public void testFree() {
+    @ParameterizedTest(name = "{index} => basePrice={0}, maxPrice={1}, isFree={2}")
+    @CsvSource({
+            "0, 0, true",
+            "100, 0, falae",
+            "0, 1000, falae"
+    })
+    public void testFree(int basePrice, int maxPrice, boolean isFree) {
 
-        /* 1. base 와 max 둘 다 0 일 경우, 무료 */
+        /**
+         * 1. base 와 max 둘 다 0 일 경우, 무료
+         * 2. base > max 경우, 유료
+         * 3. base < max 경우, 유료
+         */
 
         // Given
         Event event = Event.builder()
-                .basePrice(0)
-                .maxPrice(0)
+                .basePrice(basePrice)
+                .maxPrice(maxPrice)
                 .build();
 
         // When
         event.update();
 
         // Then
-        assertThat(event.isFree()).isTrue();
-
-
-        /* 2. base > max 경우, 유료 */
-
-        // Given
-        event = Event.builder()
-                .basePrice(100)
-                .maxPrice(0)
-                .build();
-
-        // When
-        event.update();
-
-        // Then
-        assertThat(event.isFree()).isFalse();
-
-
-        /* 2. base < max 경우, 유료 */
-
-        // Given
-        event = Event.builder()
-                .basePrice(0)
-                .maxPrice(100)
-                .build();
-
-        // When
-        event.update();
-
-        // Then
-        assertThat(event.isFree()).isFalse();
+        assertThat(event.isFree()).isEqualTo(isFree);
     }
 
-    @Test
-    public void testOffline() {
+    @ParameterizedTest
+    @MethodSource("parametersForTestOffline")
+    public void testOffline(String location, boolean isOffline) {
 
-        /* 1. 장소가 존재할 경우, 오프라인 */
+        /**
+         * 1. 장소가 존재할 경우, 오프라인
+         * 2. 장소가 존재하지 않을 경우, 온라인
+         * 3. 장소가 존재하지 않을 경우, 온라인
+         */
 
         // Given
         Event event = Event.builder()
-                .location("감남역 네이버 D2 스타텁 팩토리")
+                .location(location)
                 .build();
 
         // When
         event.update();
 
         // Then
-        assertThat(event.isOffline()).isTrue();
+        assertThat(event.isOffline()).isEqualTo(isOffline);
+    }
 
-
-        /* 2. 장소가 존재하지 않을 경우, 온라인 */
-
-        // Given
-        event = Event.builder()
-                .build();
-
-        // When
-        event.update();
-
-        // Then
-        assertThat(event.isOffline()).isFalse();
+    private static Stream<Arguments> parametersForTestOffline() {
+        return Stream.of(
+                Arguments.of("강남역", true),
+                Arguments.of(null, false),
+                Arguments.of("", false)
+        );
     }
 }
