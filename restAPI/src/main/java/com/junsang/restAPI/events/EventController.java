@@ -55,7 +55,12 @@ public class EventController {
 
         // 위와 같은 번거러운 작업보다 ModelMapper 라이브러리를 사용한다.
         Event event = modelMapper.map(eventDto, Event.class);
+
+        //== [S] Service 객체 범위
+        event.update();
         Event newEvent = this.eventRepository.save(event);
+        //== [E] Service 객체 범위
+
         URI createdUri = linkTo(EventController.class).slash(newEvent.getId()).toUri();
         return ResponseEntity.created(createdUri).body(event);
     }
