@@ -30,13 +30,21 @@ public class EventController {
 
     @PostMapping(value = "/api/events", produces = MediaTypes.HAL_JSON_VALUE)
     public ResponseEntity createEvent(@RequestBody @Valid EventDto eventDto, Errors errors) {
+
+        /**
+         * body 에 담아주기 위해 (Test 에서 ObjectMapper 의 경우, BeanSerializer 를 사용)
+         * - Event 객체의 경우, Java Bean 스펙을 준수한 객체이므로 객체의 정보를 JSON 으로 변환 가능 (기본 BeanSerializer)
+         * - Errors 객체의 경우, Java Bean 스펙을 준수하지 않으므로 JSON 으로 변환 불가능 (커스터마이징 Serializer 필요)
+         */
         if (errors.hasErrors()) {
-            return ResponseEntity.badRequest().build();
+//            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(errors);
         }
 
         eventValidator.validate(eventDto, errors);
         if (errors.hasErrors()) {
-            return ResponseEntity.badRequest().build();
+//            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(errors);
         }
 
         // 파라미터로 받은 eventDto 를 Event 타입으로 바꿔야 eventRepository 사용가능하다.

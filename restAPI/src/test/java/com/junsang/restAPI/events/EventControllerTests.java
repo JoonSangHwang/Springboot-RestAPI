@@ -125,8 +125,8 @@ public class EventControllerTests {
         EventDto eventDto = EventDto.builder().build();
 
         this.mockMvc.perform(post("/api/events")
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .content(this.objectMapper.writeValueAsString(eventDto)))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content(this.objectMapper.writeValueAsString(eventDto)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -151,8 +151,18 @@ public class EventControllerTests {
                 .build();
 
         this.mockMvc.perform(post("/api/events")
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .content(this.objectMapper.writeValueAsString(eventDto)))
-                .andExpect(status().isBadRequest());
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content(this.objectMapper.writeValueAsString(eventDto)))
+                    .andExpect(status().isBadRequest())
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0].objectName").exists())        // "objectName":"eventDto"
+                .andExpect(jsonPath("$[0].defaultMessage").exists())    // "defaultMessage":"endEventDateTime is wrong"
+                .andExpect(jsonPath("$[0].code").exists())              // "code":"wrongValue"
+
+                // 필드 에러 시, 아래 2개도 나옴
+                // "field":"endEventDateTime"
+                // "rejectedValue":"2018-11-23T14:21"
+        ;
     }
 }
