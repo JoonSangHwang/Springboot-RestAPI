@@ -1,16 +1,20 @@
 package com.junsang.restAPI.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.junsang.restAPI.common.RestDocsConfiguration;
 import com.junsang.restAPI.common.TestDescription;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
+import org.springframework.boot.test.autoconfigure.restdocs.RestDocsMockMvcConfigurationCustomizer;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -27,6 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
+@AutoConfigureRestDocs      // REST Docs
+@Import(RestDocsConfiguration.class)       // REST Docs Pretty Type
 public class EventControllerTests {
 
     @Autowired
@@ -78,6 +85,7 @@ public class EventControllerTests {
                 .andExpect(jsonPath("_links.self").exists())            // 링크정보_view
                 .andExpect(jsonPath("_links.query-events").exists())    // 링크정보_만든 사람이 수정
                 .andExpect(jsonPath("_links.update-event").exists())    // 링크정보_목록으로 이동
+                .andDo(document("create-event"))
         ;
 
     }
