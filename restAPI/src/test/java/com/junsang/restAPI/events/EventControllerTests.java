@@ -75,6 +75,9 @@ public class EventControllerTests {
                 .andExpect(jsonPath("free").value(false))
                 .andExpect(jsonPath("offline").value(true))
                 .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.name()))
+                .andExpect(jsonPath("_links.self").exists())            // 링크정보_view
+                .andExpect(jsonPath("_links.query-events").exists())    // 링크정보_만든 사람이 수정
+                .andExpect(jsonPath("_links.update-event").exists())    // 링크정보_목록으로 이동
         ;
 
     }

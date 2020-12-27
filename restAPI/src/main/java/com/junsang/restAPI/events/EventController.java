@@ -3,6 +3,7 @@ package com.junsang.restAPI.events;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.Errors;
@@ -61,7 +62,12 @@ public class EventController {
         Event newEvent = this.eventRepository.save(event);
         //== [E] Service 객체 범위
 
-        URI createdUri = linkTo(EventController.class).slash(newEvent.getId()).toUri();
-        return ResponseEntity.created(createdUri).body(event);
+        WebMvcLinkBuilder selfLinkBuilder = linkTo(EventController.class).slash(newEvent.getId());
+        URI createdUri = selfLinkBuilder.toUri();
+        EventResource eventResource = new EventResource(event);
+//        EventResource2 eventResource = new EventResource2(event);
+        eventResource.add(linkTo(EventController.class).withRel("query-events"));
+        eventResource.add(selfLinkBuilder.withRel("update-event"));
+        return ResponseEntity.created(createdUri).body(eventResource);
     }
 }
