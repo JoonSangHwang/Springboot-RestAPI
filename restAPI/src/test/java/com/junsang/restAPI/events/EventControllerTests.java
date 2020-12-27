@@ -1,6 +1,7 @@
 package com.junsang.restAPI.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.junsang.restAPI.common.TestDescription;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+//@WebMvcTest
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -45,6 +47,7 @@ public class EventControllerTests {
 //    EventRepository eventRepository;
 
     @Test
+    @TestDescription("정상적인 요청이 왔을 때")
     public void createEvent() throws Exception {
         EventDto event = EventDto.builder()
                 .name("Spring")
@@ -76,6 +79,7 @@ public class EventControllerTests {
     }
 
     @Test
+    @TestDescription("입력 받을 수 없는 요청이 함께 왔을 때")
     public void createEvent_Bad_Request() throws Exception {
         Event event = Event.builder()
                 .id(100)
@@ -108,10 +112,47 @@ public class EventControllerTests {
                 .contentType(MediaType.APPLICATION_JSON_VALUE)    // Header의 Content-Type
                 .accept(MediaTypes.HAL_JSON_VALUE)                // 요구 Content-Type
                 .content(objectMapper.writeValueAsString(event))
-        )
+                )
                 .andDo(print())                                      // 응답과 요청 출력
                 .andExpect(status().isBadRequest())                  // 400 상태 검증
         ;
 
+    }
+
+    @Test
+    @TestDescription("빈 요청이 왔을 때")
+    public void createEvent_Bad_Request_Empty_Input() throws Exception {
+        EventDto eventDto = EventDto.builder().build();
+
+        this.mockMvc.perform(post("/api/events")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(this.objectMapper.writeValueAsString(eventDto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @TestDescription("입력 값이 잘못 되었을 때")
+    public void createEvent_Bad_Request_Wrong_Input() throws Exception {
+
+        // 1. end Date 보다 begin Date 가 더 큼
+        // 2. maxPrice 보다 basePrice 가 더 큼
+
+        EventDto eventDto = EventDto.builder()
+                .name("Spring")
+                .description("REST API Development with Spring")
+                .beginEnrollmentDateTime(LocalDateTime.of(2018, 11, 26, 14, 21))
+                .closeEnrollmentDateTime(LocalDateTime.of(2018, 11, 25, 14, 21))
+                .beginEventDateTime(LocalDateTime.of(2018, 11, 24, 14, 21))
+                .endEventDateTime(LocalDateTime.of(2018, 11, 23, 14, 21))
+                .basePrice(10000)
+                .maxPrice(200)
+                .limitOfEnrollment(100)
+                .location("강남역 D2 스타텁 팩토리")
+                .build();
+
+        this.mockMvc.perform(post("/api/events")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(this.objectMapper.writeValueAsString(eventDto)))
+                .andExpect(status().isBadRequest());
     }
 }
