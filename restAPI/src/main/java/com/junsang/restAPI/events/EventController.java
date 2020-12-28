@@ -1,13 +1,20 @@
 package com.junsang.restAPI.events;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.Errors;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -72,4 +79,31 @@ public class EventController {
         eventResource.add(new Link("/docs/index.html#resources-events-create").withRel("profile"));
         return ResponseEntity.created(createdUri).body(eventResource);
     }
+
+
+    /**
+     *
+     * @param pageable  페이징 관련 파라미터 사용하기 위함 (page, size, sort 등)
+     * @param assembler 페이지를 리소스로 바꿔 링크 정보 추출하기 위함
+     * @return
+     */
+    @GetMapping(value = "/api/events", produces = MediaTypes.HAL_JSON_VALUE)
+    public ResponseEntity<?> queryEvents(Pageable pageable, PagedResourcesAssembler<Event> assembler) {
+        Page<Event> page = this.eventRepository.findAll(pageable);
+
+        // Repo 에서 받아온 페이지를 리소스로 변경 후 링크 추출 (각 이벤트 마다 self 링크 포함)
+//        PagedModel<EntityModel<Event>> pageResource = assembler.toModel(page, e -> new EventResource(e));
+        PagedModel<EntityModel<Event>> pageResource = assembler.toModel(page, new RepresentationModelAssembler<Event, EntityModel<Event>>() {
+            @Override
+            public EntityModel<Event> toModel(Event entity) {
+                return new EventResource(entity);
+            }
+        });
+
+        // 프로필 링크
+        pageResource.add(new Link("/docs/index.html#resources-events-list").withRel("profile"));
+
+        return ResponseEntity.ok(pageResource);
+    }
+
 }

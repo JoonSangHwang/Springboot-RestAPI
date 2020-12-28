@@ -7,6 +7,9 @@ import org.springframework.restdocs.mockmvc.MockMvcRestDocumentationConfigurer;
 
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 
+/**
+ * REST Docs Pretty Type
+ */
 @TestConfiguration
 public class RestDocsConfiguration {
 
