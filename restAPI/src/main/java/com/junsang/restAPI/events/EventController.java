@@ -14,13 +14,11 @@ import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.Errors;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.Optional;
 //import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
@@ -37,6 +35,12 @@ public class EventController {
         this.eventValidator = eventValidator;
     }
 
+    /**
+     * 이벤트 전문 생성
+     *
+     * @param eventDto
+     * @param errors
+     */
     @PostMapping(value = "/api/events", produces = MediaTypes.HAL_JSON_VALUE)
     public ResponseEntity createEvent(@RequestBody @Valid EventDto eventDto, Errors errors) {
 
@@ -82,10 +86,10 @@ public class EventController {
 
 
     /**
+     * 이벤트 List 조회 API
      *
      * @param pageable  페이징 관련 파라미터 사용하기 위함 (page, size, sort 등)
      * @param assembler 페이지를 리소스로 바꿔 링크 정보 추출하기 위함
-     * @return
      */
     @GetMapping(value = "/api/events", produces = MediaTypes.HAL_JSON_VALUE)
     public ResponseEntity<?> queryEvents(Pageable pageable, PagedResourcesAssembler<Event> assembler) {
@@ -105,5 +109,31 @@ public class EventController {
 
         return ResponseEntity.ok(pageResource);
     }
+
+
+    /**
+     * 이벤트 Detail 조회 API
+     *
+     * @param id
+     */
+    @GetMapping(value = "/api/events/{id}", produces = MediaTypes.HAL_JSON_VALUE)
+    public ResponseEntity getEvent(@PathVariable Integer id) {
+        Optional<Event> optionalEvent = this.eventRepository.findById(id);
+
+        // 빈 객체
+        if (optionalEvent == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // 반환
+        Event event = optionalEvent.get();
+        EventResource eventResource = new EventResource(event);
+
+        // 프로필 링크
+        eventResource.add(new Link("/docs/index.html#resources-events-get").withRel("profile"));
+
+        return ResponseEntity.ok(eventResource);
+    }
+
 
 }
