@@ -19,19 +19,25 @@
 	</properties>
 
 	<dependencies>
+		<!-- JPA -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
+
+		<!-- HATEOAS -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-hateoas</artifactId>
 		</dependency>
+
+		<!-- WEB -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
+		<!-- H2 Database -->
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
@@ -39,6 +45,8 @@
 			<!-- test Scope 는 Application 실행중에는 사용되지 않는다. 오직 테스트를 실행할 경우만 실행 됨. -->
 <!--			<scope>test</scope>-->
 		</dependency>
+
+		<!-- PostgreSQL Database -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
@@ -100,6 +108,13 @@
 			<artifactId>junit-jupiter-params</artifactId>
 			<version>5.4.2</version>
 			<scope>test</scope>
+		</dependency>
+
+		<!-- Spring Security-->
+		<dependency>
+			<groupId>org.springframework.security.oauth.boot</groupId>
+			<artifactId>spring-security-oauth2-autoconfigure</artifactId>
+			<version>2.1.0.RELEASE</version>
 		</dependency>
 	</dependencies>
 

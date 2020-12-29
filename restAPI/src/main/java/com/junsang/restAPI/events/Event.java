@@ -2,6 +2,7 @@ package com.junsang.restAPI.events;
 
 import java.time.LocalDateTime;
 
+import com.junsang.restAPI.accounts.Account;
 import lombok.*;
 
 import javax.persistence.*;
@@ -28,6 +29,9 @@ public class Event {
     private boolean free;
     @Enumerated(EnumType.STRING)
     private EventStatus eventStatus = EventStatus.DRAFT;
+
+    @ManyToOne
+    private Account manager;
 
     public void update() {
         // Update free (무료/유료)
