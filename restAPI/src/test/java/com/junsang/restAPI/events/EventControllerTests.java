@@ -1,6 +1,7 @@
 package com.junsang.restAPI.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.junsang.restAPI.common.BaseControllerTest;
 import com.junsang.restAPI.common.RestDocsConfiguration;
 import com.junsang.restAPI.common.TestDescription;
 import org.hamcrest.Matchers;
@@ -37,22 +38,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-//@WebMvcTest
-@RunWith(SpringRunner.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureRestDocs      // REST Docs
-@Import(RestDocsConfiguration.class)       // REST Docs Pretty Type
-public class EventControllerTests {
 
-    @Autowired
-    MockMvc mockMvc;
-
-    @Autowired
-    ObjectMapper objectMapper;
-
-    @Autowired
-    ModelMapper modelMapper;
+public class EventControllerTests extends BaseControllerTest {
 
     @Autowired
     EventRepository eventRepository;
