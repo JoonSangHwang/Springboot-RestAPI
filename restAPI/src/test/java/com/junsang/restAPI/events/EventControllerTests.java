@@ -7,6 +7,7 @@ import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.restdocs.RestDocsMockMvcConfigurationCustomizer;
@@ -32,6 +33,7 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -48,6 +50,9 @@ public class EventControllerTests {
 
     @Autowired
     ObjectMapper objectMapper;
+
+    @Autowired
+    ModelMapper modelMapper;
 
     @Autowired
     EventRepository eventRepository;
@@ -167,6 +172,14 @@ public class EventControllerTests {
 
     }
 
+
+
+    /**
+     *
+     ***************************************** 입력값 이외에 에러 발생 *****************************************
+     *
+     */
+
     @Test
     @TestDescription("입력 받을 수 없는 요청이 함께 왔을 때")
     public void createEvent_Bad_Request() throws Exception {
@@ -208,6 +221,14 @@ public class EventControllerTests {
 
     }
 
+
+
+    /**
+     *
+     ***************************************** Bad Request 처리 *****************************************
+     *
+     */
+
     @Test
     @TestDescription("빈 요청이 왔을 때")
     public void createEvent_Bad_Request_Empty_Input() throws Exception {
@@ -216,7 +237,10 @@ public class EventControllerTests {
         this.mockMvc.perform(post("/api/events")
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(this.objectMapper.writeValueAsString(eventDto)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+        ;
+
+
     }
 
     @Test
@@ -245,9 +269,13 @@ public class EventControllerTests {
                     .andExpect(status().isBadRequest())
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$[0].objectName").exists())        // "objectName":"eventDto"
-                .andExpect(jsonPath("$[0].defaultMessage").exists())    // "defaultMessage":"endEventDateTime is wrong"
-                .andExpect(jsonPath("$[0].code").exists())              // "code":"wrongValue"
+//                .andExpect(jsonPath("$[0].objectName").exists())        // "objectName":"eventDto"
+//                .andExpect(jsonPath("$[0].defaultMessage").exists())    // "defaultMessage":"endEventDateTime is wrong"
+//                .andExpect(jsonPath("$[0].code").exists())              // "code":"wrongValue"
+                .andExpect(jsonPath("errors[0].objectName").exists())
+                .andExpect(jsonPath("errors[0].defaultMessage").exists())
+                .andExpect(jsonPath("errors[0].code").exists())
+                .andExpect(jsonPath("_links.index").exists())
 
                 // 필드 에러 시, 아래 2개도 나옴
                 // "field":"endEventDateTime"
@@ -255,6 +283,13 @@ public class EventControllerTests {
         ;
     }
 
+
+
+    /**
+     *
+     ***************************************** 이벤트 목록 조회 API *****************************************
+     *
+     */
 
     @Test
     @TestDescription("30개의 이벤트를 10개씩 두번째 페이지 조회하기")
@@ -280,15 +315,13 @@ public class EventControllerTests {
         ;
     }
 
-    private Event generateEvent(int index) {
-        Event event = Event.builder()
-                .name("event " + index)
-                .description("test event")
-                .build();
 
-        return this.eventRepository.save(event);
-    }
 
+    /**
+     *
+     ***************************************** 이벤트 상세 조회 API *****************************************
+     *
+     */
 
     @Test
     @TestDescription("기존의 이벤트를 하나 조회하기")
@@ -307,12 +340,122 @@ public class EventControllerTests {
         ;
     }
 
-
     @Test
     @TestDescription("없는 이벤트는 조회했을 때 404 응답받기")
     public void getEvent404() throws Exception {
         // When & Then
         this.mockMvc.perform(get("/api/events/11883"))
                 .andExpect(status().isNotFound());
+    }
+
+
+
+    /**
+     *
+     ***************************************** 이벤트 수정 API *****************************************
+     *
+     */
+
+    @Test
+    @TestDescription("이벤트를 정상적으로 수정하기")
+    public void updateEvent() throws Exception {
+        // Given
+        Event event = this.generateEvent(200);
+
+        EventDto eventDto = this.modelMapper.map(event, EventDto.class);
+        String eventName = "Updated Event";
+        eventDto.setName(eventName);
+
+        // When & Then
+        this.mockMvc.perform(put("/api/events/{id}", event.getId())
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content(this.objectMapper.writeValueAsString(eventDto))
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("name").value(eventName))
+                .andExpect(jsonPath("_links.self").exists())
+                .andDo(document("update-event"))
+        ;
+    }
+
+    @Test
+    @TestDescription("입력값이 비어있는 경우에 이벤트 수정 실패")
+    public void updateEvent400_Empty() throws Exception {
+        // Given
+        Event event = this.generateEvent(200);
+
+        EventDto eventDto = new EventDto();
+
+        // When & Then
+        this.mockMvc.perform(put("/api/events/{id}", event.getId())
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content(this.objectMapper.writeValueAsString(eventDto))
+                )
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @TestDescription("입력값이 잘못된 경우에 이벤트 수정 실패")
+    public void updateEvent400_Wrong() throws Exception {
+        // Given
+        Event event = this.generateEvent(200);
+
+        EventDto eventDto = this.modelMapper.map(event, EventDto.class);
+        eventDto.setBasePrice(20000);       // Base > Max (에러)
+        eventDto.setMaxPrice(1000);         // Base > Max (에러)
+
+        // When & Then
+        this.mockMvc.perform(put("/api/events/{id}", event.getId())
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content(this.objectMapper.writeValueAsString(eventDto))
+                )
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @TestDescription("존재하지 않는 이벤트 수정 실패")
+    public void updateEvent404() throws Exception {
+        // Given
+        Event event = this.generateEvent(200);
+        EventDto eventDto = this.modelMapper.map(event, EventDto.class);
+
+        // When & Then
+        this.mockMvc.perform(put("/api/events/123123")
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content(this.objectMapper.writeValueAsString(eventDto))
+                )
+                .andDo(print())
+                .andExpect(status().isNotFound());      // 데이터와 상관 없이 404
+    }
+
+
+
+    /**
+     *
+     ***************************************** 사용자 정의 함수 *****************************************
+     *
+     */
+
+    private Event generateEvent(int index) {
+        Event event = Event.builder()
+                .name("event " + index)
+                .description("test event")
+                .beginEnrollmentDateTime(LocalDateTime.of(2018, 11, 23, 14, 21))
+                .closeEnrollmentDateTime(LocalDateTime.of(2018, 11, 24, 14, 21))
+                .beginEventDateTime(LocalDateTime.of(2018, 11, 25, 14, 21))
+                .endEventDateTime(LocalDateTime.of(2018, 11, 26, 14, 21))
+                .basePrice(100)
+                .maxPrice(200)
+                .limitOfEnrollment(100)
+                .location("강남역 D2 스타텁 팩토리")
+                .free(false)
+                .offline(true)
+                .eventStatus(EventStatus.DRAFT)
+                .build();
+
+        return this.eventRepository.save(event);
     }
 }

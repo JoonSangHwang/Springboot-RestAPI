@@ -1,5 +1,7 @@
 package com.junsang.restAPI.events;
 
+import com.junsang.restAPI.common.ErrorResource;
+import com.junsang.restAPI.index.IndexController;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
@@ -19,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.net.URI;
 import java.util.Optional;
-//import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 @Controller
@@ -50,14 +51,12 @@ public class EventController {
          * - Errors 객체의 경우, Java Bean 스펙을 준수하지 않으므로 JSON 으로 변환 불가능 (커스터마이징 Serializer 필요)
          */
         if (errors.hasErrors()) {
-//            return ResponseEntity.badRequest().build();
-            return ResponseEntity.badRequest().body(errors);
+            return ResponseEntity.badRequest().body(ErrorResource.modelOf(errors));
         }
 
         eventValidator.validate(eventDto, errors);
         if (errors.hasErrors()) {
-//            return ResponseEntity.badRequest().build();
-            return ResponseEntity.badRequest().body(errors);
+            return ResponseEntity.badRequest().body(ErrorResource.modelOf(errors));
         }
 
         // 파라미터로 받은 eventDto 를 Event 타입으로 바꿔야 eventRepository 사용가능하다.
@@ -80,7 +79,7 @@ public class EventController {
 //        EventResource2 eventResource = new EventResource2(event);
         eventResource.add(linkTo(EventController.class).withRel("query-events"));
         eventResource.add(selfLinkBuilder.withRel("update-event"));
-        eventResource.add(new Link("/docs/index.html#resources-events-create").withRel("profile"));
+        eventResource.add(Link.of("/docs/index.html#resources-events-create").withRel("profile"));
         return ResponseEntity.created(createdUri).body(eventResource);
     }
 
@@ -105,7 +104,7 @@ public class EventController {
         });
 
         // 프로필 링크
-        pageResource.add(new Link("/docs/index.html#resources-events-list").withRel("profile"));
+        pageResource.add(Link.of("/docs/index.html#resources-events-list").withRel("profile"));
 
         return ResponseEntity.ok(pageResource);
     }
@@ -121,19 +120,62 @@ public class EventController {
         Optional<Event> optionalEvent = this.eventRepository.findById(id);
 
         // 빈 객체
-        if (optionalEvent == null) {
+        if (!optionalEvent.isPresent()) {
             return ResponseEntity.notFound().build();
         }
 
         // 반환
         Event event = optionalEvent.get();
-        EventResource eventResource = new EventResource(event);
 
         // 프로필 링크
-        eventResource.add(new Link("/docs/index.html#resources-events-get").withRel("profile"));
+        EventResource eventResource = new EventResource(event);
+        eventResource.add(Link.of("/docs/index.html#resources-events-get").withRel("profile"));
 
         return ResponseEntity.ok(eventResource);
     }
 
+
+    /**
+     *
+     * 이벤트 수정 API
+     *
+     * @param id
+     * @param eventDto
+     * @param errors
+     */
+    @PutMapping(value = "/api/events/{id}", produces = MediaTypes.HAL_JSON_VALUE)
+    public ResponseEntity updateEvent(@PathVariable Integer id,
+                                      @RequestBody @Valid EventDto eventDto,
+                                      Errors errors) {
+
+        // 조회
+        Optional<Event> optionalEvent = this.eventRepository.findById(id);
+        if (!optionalEvent.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (errors.hasErrors()) {
+            return ResponseEntity.badRequest().body(ErrorResource.modelOf(errors));
+        }
+
+        this.eventValidator.validate(eventDto, errors);
+        if (errors.hasErrors()) {
+            return ResponseEntity.badRequest().body(ErrorResource.modelOf(errors));
+        }
+
+        Event existingEvent = optionalEvent.get();
+
+        // 파라미터로 받은 eventDto 를 Event 타입으로 바꿔야 eventRepository 사용가능하다.
+        this.modelMapper.map(eventDto, existingEvent);
+
+        // 수정(저장)
+        Event savedEvent = this.eventRepository.save(existingEvent);
+
+        // 프로필 링크
+        EventResource eventResource = new EventResource(savedEvent);
+        eventResource.add(Link.of("/docs/index.html#resources-events-update").withRel("profile"));
+
+        return ResponseEntity.ok(eventResource);
+    }
 
 }
